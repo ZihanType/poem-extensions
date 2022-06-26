@@ -1,94 +1,184 @@
 # poem-extensions
 
 Add some extensions to Poem web framework.
-In this repo:
-  - poem-openapi-response
-  - poem-openapi-api-derive
 
-## poem-openapi-response
-
-Uniform response for [poem-openapi](https://docs.rs/poem-openapi).
-
-### Example
-
-```rust
-use poem::{listener::TcpListener, EndpointExt, Route, Server};
-use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
-use poem_openapi_response::{ErrorResponse, UniResponse};
-
-struct Api;
-
-#[OpenApi]
-impl Api {
-    /// Hello world
-    #[oai(path = "/hello", method = "get")]
-    async fn hello(&self) -> UniResponse<PlainText<&'static str>> {
-        UniResponse::new(PlainText("Hello World"))
-    }
-
-    /// Not found
-    #[oai(path = "/not_found", method = "get")]
-    async fn not_found(&self) -> UniResponse {
-        UniResponse::not_found(None)
-    }
-}
-
-let api_service =
-        OpenApiService::new(Api, "Hello World", "1.0").server("http://localhost:3000");
-let ui = api_service.swagger_ui();
-let app = Route::new()
-    .nest("/", api_service)
-    .nest("/docs", ui)
-    .catch_all_error(|e| async move {
-        ErrorResponse::from_poem_error(&e)
-                .unwrap_or_else(|| ErrorResponse::InternalServerError(PlainText(e.to_string())))
-    });
-Server::new(TcpListener::bind("127.0.0.1:3000"))
-    .run(app)
-    .await
-    .unwrap();
-```
-
-## poem-openapi-api-derive
+## `UniOpenApi`
 
 `UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), UniOpenApi is available to facilitate developers to define an unlimited number of `OpenApi` implementations.
 
 ### Example
 
+#### before
+
 ```rust
-use poem::{listener::TcpListener, Route, Server};
-use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
-use poem_openapi_api_derive::UniOpenApi;
+use poem_openapi::{OpenApi, OpenApiService};
 
-struct A;
+struct Api1;
 
 #[OpenApi]
-impl A {
-    #[oai(path = "/helloA", method = "get")]
-    async fn hello(&self) -> PlainText<&'static str> {
-        PlainText("Hello World A")
-    }
-}
+impl Api1 {}
 
-struct B;
+struct Api2;
 
 #[OpenApi]
-impl B {
-    #[oai(path = "/helloB", method = "get")]
-    async fn hello(&self) -> PlainText<&'static str> {
-        PlainText("Hello World B")
-    }
-}
+impl Api2 {}
 
-#[derive(UniOpenApi)]
-struct Uni(A, B);
+struct Api3;
 
-let api_service =
-    OpenApiService::new(Uni(A, B), "Hello World", "1.0").server("http://localhost:3000");
-let ui = api_service.swagger_ui();
-let app = Route::new().nest("/", api_service).nest("/docs", ui);
-Server::new(TcpListener::bind("127.0.0.1:3000"))
-    .run(app)
-    .await
-    .unwrap();
+#[OpenApi]
+impl Api3 {}
+
+/// only put a maximum of 16 OpenApi struct
+let api = (Api1, Api2, Api3);
+
+let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
+        .server("http://localhost:3000/api");
 ```
+
+#### after
+
+```rust
+use poem_openapi::{OpenApi, OpenApiService};
+
+struct Api1;
+
+#[OpenApi]
+impl Api1 {}
+
+struct Api2;
+
+#[OpenApi]
+impl Api2 {}
+
+struct Api3;
+
+#[OpenApi]
+impl Api3 {}
+
+/// unlimit
+#[derive(UniOpenApi)]
+struct Union(Api1, Api2, Api3);
+
+/// unlimit
+let api = Union(Api1, Api2, Api3);
+
+let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
+        .server("http://localhost:3000/api");
+```
+
+## `response`, `OneResponse`, `UniResponse`
+
+The response type defined by [ApiResponse](https://docs.rs/poem-openapi/latest/poem_openapi/derive.ApiResponse.html) has too much control granularity and is less reusable. Either one request defines one response, which is too much code, or it defines a response that contains all possible responses, which can obscure the really important ones.
+
+Because of such shortcomings, 3 helpers are provided in this repository.
+
+- `UniResponse` is an `enum` with 11 generic type slots corresponding to 11 response status codes, and the default type is not displayed in Swagger if no generic type is inserted into the corresponding status code.
+- `OneResponse` is a simplification of `ApiResponse`, where only one response type corresponding to one status code can be defined.
+- `response` is a functional macro for insert really response type into `UniResponse` type slots at the function return type.
+
+### Example
+
+#### before
+
+```rust
+use poem_openapi::{param::Query, ApiResponse, OpenApi, OpenApiService};
+
+#[derive(ApiResponse)]
+enum FirstResp {
+    #[oai(status = 200)]
+    Ok,
+    #[oai(status = 400)]
+    BadRequest,
+}
+
+#[derive(ApiResponse)]
+enum SecondResp {
+    #[oai(status = 200)]
+    Ok,
+    #[oai(status = 400)]
+    BadRequest,
+    #[oai(status = 404)]
+    NotFound,
+}
+
+struct Api;
+
+#[OpenApi]
+impl Api {
+    #[oai(path = "/first", method = "get")]
+    async fn first(&self, name: Query<Option<u64>>) -> FirstResp {
+        match name.0 {
+            Some(_) => FirstResp::Ok,
+            None => FirstResp::BadRequest,
+        }
+    }
+
+    #[oai(path = "/second", method = "get")]
+    async fn second(&self, name: Query<Option<u64>>) -> SecondResp {
+        match name.0 {
+            Some(a) if a > 100 => SecondResp::NotFound,
+            Some(_) => SecondResp::Ok,
+            None => SecondResp::BadRequest,
+        }
+    }
+}
+```
+
+#### after
+
+```rust
+use poem_openapi::{param::Query, payload::PlainText, OpenApi, OpenApiService};
+use poem_openapi_macro::{response, OneResponse};
+use poem_openapi_response::UniResponse::*;
+
+#[derive(OneResponse)]
+#[oai(status = 200)]
+struct Ok(PlainText<String>);
+
+#[derive(OneResponse)]
+#[oai(status = 400)]
+struct BadRequest(PlainText<String>);
+
+#[derive(OneResponse)]
+#[oai(status = 404)]
+struct NotFound;
+
+struct Api;
+
+#[OpenApi]
+impl Api {
+    #[oai(path = "/first", method = "get")]
+    async fn first(
+        &self,
+        name: Query<Option<u64>>,
+    ) -> response! {
+           200: Ok,
+           400: BadRequest,
+       } {
+        match name.0 {
+            Some(a) => T200(Ok(PlainText(format!("{}", a)))),
+            None => T400(BadRequest(PlainText("name is required".to_string()))),
+        }
+    }
+
+    #[oai(path = "/second", method = "get")]
+    async fn second(
+        &self,
+        name: Query<Option<u64>>,
+    ) -> response! {
+           200: Ok,
+           400: BadRequest,
+           404: NotFound,
+       } {
+        match name.0 {
+            Some(a) if a > 100 => T404(NotFound),
+            Some(a) => T200(Ok(PlainText(format!("{}", a)))),
+            None => T400(BadRequest(PlainText("name is required".to_string()))),
+        }
+    }
+}
+```
+
+## Contributing
+
+Thanks for your help improving the project! We are so happy to have you!
