@@ -132,10 +132,6 @@ use poem_openapi_macro::{response, OneResponse};
 use poem_openapi_response::UniResponse::*;
 
 #[derive(OneResponse)]
-#[oai(status = 200)]
-struct Ok(PlainText<String>);
-
-#[derive(OneResponse)]
 #[oai(status = 400)]
 struct BadRequest(PlainText<String>);
 
@@ -152,11 +148,11 @@ impl Api {
         &self,
         name: Query<Option<u64>>,
     ) -> response! {
-           200: Ok,
+           200: PlainText<String>,
            400: BadRequest,
        } {
         match name.0 {
-            Some(a) => T200(Ok(PlainText(format!("{}", a)))),
+            Some(a) => T200(PlainText(format!("{}", a))),
             None => T400(BadRequest(PlainText("name is required".to_string()))),
         }
     }
@@ -166,13 +162,13 @@ impl Api {
         &self,
         name: Query<Option<u64>>,
     ) -> response! {
-           200: Ok,
+           200: (),
            400: BadRequest,
            404: NotFound,
        } {
         match name.0 {
             Some(a) if a > 100 => T404(NotFound),
-            Some(a) => T200(Ok(PlainText(format!("{}", a)))),
+            Some(_) => T200(()),
             None => T400(BadRequest(PlainText("name is required".to_string()))),
         }
     }
