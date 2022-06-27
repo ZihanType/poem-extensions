@@ -39,6 +39,7 @@ let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
 
 ```rust
 use poem_openapi::{OpenApi, OpenApiService};
+use poem_openapi_macro::UniOpenApi;
 
 struct Api1;
 
@@ -81,7 +82,7 @@ Because of such shortcomings, 3 helpers are provided in this repository.
 #### before
 
 ```rust
-use poem_openapi::{param::Query, ApiResponse, OpenApi, OpenApiService};
+use poem_openapi::{param::Query, ApiResponse, OpenApi};
 
 #[derive(ApiResponse)]
 enum FirstResp {
@@ -127,13 +128,18 @@ impl Api {
 #### after
 
 ```rust
-use poem_openapi::{param::Query, payload::PlainText, OpenApi, OpenApiService};
+use poem::IntoResponse;
+use poem_openapi::{
+    param::Query,
+    payload::{Payload, PlainText},
+    OpenApi,
+};
 use poem_openapi_macro::{response, OneResponse};
 use poem_openapi_response::UniResponse::*;
 
 #[derive(OneResponse)]
 #[oai(status = 400)]
-struct BadRequest(PlainText<String>);
+struct BadRequest<T: IntoResponse + Payload>(T);
 
 #[derive(OneResponse)]
 #[oai(status = 404)]
@@ -149,7 +155,7 @@ impl Api {
         name: Query<Option<u64>>,
     ) -> response! {
            200: PlainText<String>,
-           400: BadRequest,
+           400: BadRequest<PlainText<String>>,
        } {
         match name.0 {
             Some(a) => T200(PlainText(format!("{}", a))),
@@ -163,7 +169,7 @@ impl Api {
         name: Query<Option<u64>>,
     ) -> response! {
            200: (),
-           400: BadRequest,
+           400: BadRequest<PlainText<String>>,
            404: NotFound,
        } {
         match name.0 {
