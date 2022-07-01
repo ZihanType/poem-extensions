@@ -134,8 +134,7 @@ use poem_openapi::{
     payload::{Payload, PlainText},
     OpenApi,
 };
-use poem_openapi_macro::{response, OneResponse};
-use poem_openapi_response::UniResponse::*;
+use poem_openapi_response::{response, OneResponse, UniResponse::*};
 
 #[derive(OneResponse)]
 #[oai(status = 400)]
