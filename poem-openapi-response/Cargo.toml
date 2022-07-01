@@ -14,7 +14,7 @@ repository = "https://github.com/ZihanType/poem-extensions"
 [dependencies]
 poem = { version = "1.3.32", default-features = false, optional = true }
 poem-openapi = { version = "2.0.2", default-features = false, optional = true }
-poem-openapi-macro = { path = "../poem-openapi-macro", version = "0.1.0", default-features = false, optional = true, features = ["response", "one_response", "uni_response"] }
+poem-openapi-macro = { path = "../poem-openapi-macro", version = "0.2.0", default-features = false, optional = true, features = ["response", "one_response", "uni_response"] }
 
 [features]
 default = ["dep:poem", "dep:poem-openapi", "dep:poem-openapi-macro"]
