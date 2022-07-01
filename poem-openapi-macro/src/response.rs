@@ -1,3 +1,4 @@
+use crate::SUPPORT_STATUS;
 use proc_macro2::{Literal, Punct, Spacing};
 use quote::{quote, ToTokens, TokenStreamExt};
 use std::collections::HashMap;
@@ -51,7 +52,6 @@ pub(crate) fn generate(args: &Responses) -> syn::Result<proc_macro2::TokenStream
         .map(|r| (&r.status_code, &r.response_type))
         .collect();
 
-    const SUPPORT_STATUS: [u16; 11] = [200, 400, 401, 403, 404, 405, 412, 413, 415, 416, 500];
     let unsupport_status: Vec<_> = status_to_type
         .keys()
         .filter(|s| !SUPPORT_STATUS.contains(s))

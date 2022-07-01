@@ -2,6 +2,20 @@
 
 Add some extensions to Poem web framework.
 
+## Changelog
+
+### poem-openapi-macro
+
+#### [0.2.0] 2022-07-02
+
+-- Add `generate_define_uni_response` macro generate `UniResponse` with with 60 generic type slots corresponding to 60 response status codes.
+
+### poem-openapi-response
+
+#### [0.4.0] 2022-07-02
+
+-- Export `response`, `OneResponse`, `UniResponse` from `poem-openapi-macro`.
+
 ## `UniOpenApi`
 
 `UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), UniOpenApi is available to facilitate developers to define an unlimited number of `OpenApi` implementations.
@@ -73,7 +87,7 @@ The response type defined by [ApiResponse](https://docs.rs/poem-openapi/latest/p
 
 Because of such shortcomings, 3 helpers are provided in this repository.
 
-- `UniResponse` is an `enum` with 11 generic type slots corresponding to 11 response status codes, and the default type is not displayed in Swagger if no generic type is inserted into the corresponding status code.
+- `UniResponse` is an `enum` with 60 generic type slots corresponding to 60 response status codes, and the default type is not displayed in Swagger if no generic type is inserted into the corresponding status code.
 - `OneResponse` is a simplification of `ApiResponse`, where only one response type corresponding to one status code can be defined.
 - `response` is a functional macro for insert really response type into `UniResponse` type slots at the function return type.
 

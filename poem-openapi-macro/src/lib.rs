@@ -6,6 +6,8 @@ mod one_response;
 mod response;
 #[cfg(feature = "uni_open_api")]
 mod uni_open_api;
+#[cfg(feature = "uni_response")]
+mod uni_response;
 
 #[cfg(feature = "error")]
 use error::GeneratorResult;
@@ -15,6 +17,8 @@ use proc_macro::TokenStream;
 use response::Responses;
 #[cfg(feature = "macros")]
 use syn::{parse_macro_input, DeriveInput};
+#[cfg(feature = "uni_response")]
+use uni_response::SUPPORT_STATUS;
 
 #[cfg(feature = "uni_open_api")]
 #[proc_macro_derive(UniOpenApi)]
@@ -42,4 +46,11 @@ pub fn response(input: TokenStream) -> TokenStream {
     response::generate(&args)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
+}
+
+#[cfg(feature = "uni_response")]
+#[doc(hidden)]
+#[proc_macro]
+pub fn generate_define_uni_response(_: TokenStream) -> TokenStream {
+    uni_response::generate().into()
 }

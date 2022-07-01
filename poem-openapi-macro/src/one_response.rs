@@ -1,3 +1,4 @@
+use crate::{GeneratorResult, SUPPORT_STATUS};
 use darling::{
     ast::{Data, Fields},
     util::{Ignored, SpannedValue},
@@ -6,8 +7,6 @@ use darling::{
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, DeriveInput, Generics, Lit, Meta, Path, Type};
-
-use crate::GeneratorResult;
 
 #[derive(FromMeta, Debug)]
 struct ExtraHeader {
@@ -324,10 +323,13 @@ fn update_content_type(content_type: Option<&str>) -> (TokenStream, TokenStream)
 }
 
 fn get_status(span: Span, status: u16) -> GeneratorResult<TokenStream> {
-    if !(100..1000).contains(&status) {
+    if !SUPPORT_STATUS.contains(&status) {
         return Err(syn::Error::new(
             span,
-            "Invalid status code, it must be greater or equal to 100 and less than 1000.",
+            format!(
+                "Invalid status code, support status code:\n{:?}",
+                SUPPORT_STATUS
+            ),
         )
         .into());
     }
