@@ -1,3 +1,4 @@
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Member};
 
@@ -23,43 +24,43 @@ fn get_fields(args: &DeriveInput) -> syn::Result<&StructFields> {
     }
 }
 
-pub(crate) fn generate(args: &DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+pub(crate) fn generate(args: &DeriveInput) -> syn::Result<TokenStream> {
     let struct_ident = &args.ident;
     let (impl_generics, ty_generics, where_clause) = args.generics.split_for_impl();
 
-    let types = get_fields(args)?.iter().map(|f| &f.ty).collect::<Vec<_>>();
-    let idx = types
+    let (indexes, types): (Vec<Member>, Vec<&syn::Type>) = get_fields(args)?
         .iter()
+        .map(|f| &f.ty)
         .enumerate()
-        .map(|a| Member::from(a.0))
-        .collect::<Vec<_>>();
+        .map(|(idx, ty)| (Member::from(idx), ty))
+        .unzip();
 
     let cap = types.len();
 
-    let ret = quote! {
+    let expand = quote! {
         impl #impl_generics ::poem_openapi::OpenApi for #struct_ident #ty_generics #where_clause {
             fn meta() -> ::std::vec::Vec<::poem_openapi::registry::MetaApi> {
                 let mut metadata = ::std::vec::Vec::with_capacity(#cap);
                 #(
-                    metadata.extend(#types::meta());
+                    metadata.extend(<#types as ::poem_openapi::OpenApi>::meta());
                 )*
                 metadata
             }
 
             fn register(registry: &mut ::poem_openapi::registry::Registry) {
                 #(
-                    #types::register(registry);
+                    <#types as ::poem_openapi::OpenApi>::register(registry);
                 )*
             }
 
             fn add_routes(self, route: ::poem::Route) -> ::poem::Route {
                 #(
-                    let route = self.#idx.add_routes(route);
+                    let route = self.#indexes.add_routes(route);
                 )*
                 route
             }
         }
     };
 
-    Ok(ret)
+    Ok(expand)
 }

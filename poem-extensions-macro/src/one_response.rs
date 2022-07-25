@@ -66,9 +66,9 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
         }
     };
 
-    let mut into_response_arm_vec = Vec::new();
-    let mut meta_response_vec = Vec::new();
-    let mut schema_type_vec = Vec::new();
+    let into_response_arm;
+    let meta_response_obj;
+    let mut schema_type = Vec::new();
 
     let struct_description = get_description(&args.attrs)?;
     let struct_description = optional_literal(&struct_description);
@@ -130,16 +130,16 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
             let media_ty = &value_fields[0].ty;
             let (update_response_content_type, update_meta_content_type) =
                 update_content_type(args.content_type.as_deref());
-            into_response_arm_vec.push(quote! {
+            into_response_arm = quote! {
                 #struct_ident(media, #(#matched_header_idents),*) => {
-                    let mut resp = ::poem_openapi::__private::poem::IntoResponse::into_response(media);
-                    resp.set_status(::poem_openapi::__private::poem::http::StatusCode::from_u16(#status).unwrap());
+                    let mut resp = ::poem::web::IntoResponse::into_response(media);
+                    resp.set_status(::poem::http::StatusCode::from_u16(#status).unwrap());
                     #(#insert_response_with_headers)*
                     #update_response_content_type
                     resp
                 }
-            });
-            meta_response_vec.push(quote! {
+            };
+            meta_response_obj = quote! {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
                     status: ::std::option::Option::Some(#status),
@@ -150,8 +150,8 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     },
                     headers: ::std::vec![#(#meta_headers),*],
                 }
-            });
-            schema_type_vec.push(media_ty);
+            };
+            schema_type.push(media_ty);
         }
         0 => {
             // Field
@@ -160,23 +160,23 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
             } else {
                 quote!(#struct_ident)
             };
-            into_response_arm_vec.push(quote! {
+            into_response_arm = quote! {
                 #field => {
-                    let status = ::poem_openapi::__private::poem::http::StatusCode::from_u16(#status).unwrap();
+                    let status = ::poem::http::StatusCode::from_u16(#status).unwrap();
                     #[allow(unused_mut)]
-                    let mut resp = ::poem_openapi::__private::poem::IntoResponse::into_response(status);
+                    let mut resp = ::poem::web::IntoResponse::into_response(status);
                     #(#insert_response_with_headers)*
                     resp
                 }
-            });
-            meta_response_vec.push(quote! {
+            };
+            meta_response_obj = quote! {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
                     status: ::std::option::Option::Some(#status),
                     content: ::std::vec![],
                     headers: ::std::vec![#(#meta_headers),*],
                 }
-            });
+            };
         }
         _ => {
             return Err(
@@ -195,7 +195,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
     };
     let bad_request_handler = args.bad_request_handler.as_ref().map(|path| {
         quote! {
-            fn from_parse_request_error(err: ::poem_openapi::__private::poem::Error) -> Self {
+            fn from_parse_request_error(err: ::poem::error::Error) -> Self {
                 #path(err)
             }
         }
@@ -203,10 +203,10 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
 
     let expanded = {
         quote! {
-            impl #impl_generics ::poem_openapi::__private::poem::IntoResponse for #struct_ident #ty_generics #where_clause {
-                fn into_response(self) -> ::poem_openapi::__private::poem::Response {
+            impl #impl_generics ::poem::web::IntoResponse for #struct_ident #ty_generics #where_clause {
+                fn into_response(self) -> ::poem::Response {
                     match self {
-                        #(#into_response_arm_vec)*
+                        #into_response_arm
                     }
                 }
             }
@@ -216,21 +216,21 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
 
                 fn meta() -> ::poem_openapi::registry::MetaResponses {
                     ::poem_openapi::registry::MetaResponses {
-                        responses: ::std::vec![#(#meta_response_vec),*]
+                        responses: ::std::vec![#meta_response_obj]
                     }
                 }
 
                 fn register(registry: &mut ::poem_openapi::registry::Registry) {
-                    #(<#schema_type_vec as ::poem_openapi::ResponseContent>::register(registry);)*
+                    #(<#schema_type as ::poem_openapi::ResponseContent>::register(registry);)*
                 }
 
                 #bad_request_handler
             }
 
-            impl #impl_generics ::std::convert::From<#struct_ident #ty_generics> for ::poem_openapi::__private::poem::Error #where_clause {
-                fn from(resp: #struct_ident #ty_generics) -> ::poem_openapi::__private::poem::Error {
-                    use ::poem_openapi::__private::poem::IntoResponse;
-                    ::poem_openapi::__private::poem::Error::from_response(resp.into_response())
+            impl #impl_generics ::std::convert::From<#struct_ident #ty_generics> for ::poem::error::Error #where_clause {
+                fn from(resp: #struct_ident #ty_generics) -> ::poem::error::Error {
+                    use ::poem::web::IntoResponse;
+                    ::poem::error::Error::from_response(resp.into_response())
                 }
             }
         }
@@ -303,8 +303,8 @@ fn update_content_type(content_type: Option<&str>) -> (TokenStream, TokenStream)
     let update_response_content_type = match content_type {
         Some(content_type) => {
             quote! {
-                resp.headers_mut().insert(::poem_openapi::__private::poem::http::header::CONTENT_TYPE,
-                    ::poem_openapi::__private::poem::http::HeaderValue::from_static(#content_type));
+                resp.headers_mut().insert(::poem::http::header::CONTENT_TYPE,
+                    ::poem::http::HeaderValue::from_static(#content_type));
             }
         }
         None => quote!(),
@@ -327,7 +327,7 @@ fn get_status(span: Span, status: u16) -> GeneratorResult<TokenStream> {
         return Err(syn::Error::new(
             span,
             format!(
-                "Invalid status code, support status code:\n{:?}",
+                "Invalid status code, support status code: {:?}",
                 SUPPORT_STATUS
             ),
         )

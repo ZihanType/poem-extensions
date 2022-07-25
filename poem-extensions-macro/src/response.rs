@@ -1,5 +1,5 @@
 use crate::SUPPORT_STATUS;
-use proc_macro2::{Literal, Punct, Spacing};
+use proc_macro2::{Literal, Punct, Spacing, TokenStream};
 use quote::{quote, ToTokens, TokenStreamExt};
 use std::collections::HashMap;
 
@@ -36,7 +36,7 @@ impl syn::parse::Parse for Responses {
 }
 
 impl ToTokens for Responses {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         self.responses.iter().for_each(|response| {
             tokens.append(Literal::u16_unsuffixed(response.status_code));
             tokens.append(Punct::new(':', Spacing::Alone));
@@ -46,7 +46,7 @@ impl ToTokens for Responses {
     }
 }
 
-pub(crate) fn generate(args: &Responses) -> syn::Result<proc_macro2::TokenStream> {
+pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
     let status_to_type: HashMap<&u16, &syn::Type> = (&args.responses)
         .iter()
         .map(|r| (&r.status_code, &r.response_type))
@@ -67,25 +67,25 @@ pub(crate) fn generate(args: &Responses) -> syn::Result<proc_macro2::TokenStream
         ));
     }
 
-    let response_types: Vec<_> = SUPPORT_STATUS
+    let response_types: Vec<TokenStream> = SUPPORT_STATUS
         .iter()
         .map(|status| match status_to_type.get(status) {
             Some(response_type) => {
                 quote!(#response_type)
             }
             None => {
-                quote!(::poem_openapi_response::Empty)
+                quote!(::poem_extensions::Empty)
             }
         })
         .collect();
 
-    let ret = quote! {
-        ::poem_openapi_response::UniResponse<
+    let expand = quote! {
+        ::poem_extensions::UniResponse<
             #(
                 #response_types,
             )*
         >
     };
 
-    Ok(ret)
+    Ok(expand)
 }

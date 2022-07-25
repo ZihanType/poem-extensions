@@ -2,23 +2,9 @@
 
 Add some extensions to Poem web framework.
 
-## Changelog
-
-### poem-openapi-macro
-
-#### [0.2.0] 2022-07-02
-
--- Add `generate_define_uni_response` macro generate `UniResponse` with with 60 generic type slots corresponding to 60 response status codes.
-
-### poem-openapi-response
-
-#### [0.4.0] 2022-07-02
-
--- Export `response`, `OneResponse`, `UniResponse` from `poem-openapi-macro`.
-
 ## `UniOpenApi`
 
-`UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), UniOpenApi is available to facilitate developers to define an unlimited number of `OpenApi` implementations.
+`UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), `UniOpenApi` is available to facilitate developers to define an unlimited number of `OpenApi` implementations.
 
 ### Example
 
@@ -52,8 +38,8 @@ let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
 #### after
 
 ```rust
+use poem_extensions::UniOpenApi;
 use poem_openapi::{OpenApi, OpenApiService};
-use poem_openapi_macro::UniOpenApi;
 
 struct Api1;
 
@@ -81,15 +67,15 @@ let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
         .server("http://localhost:3000/api");
 ```
 
-## `response`, `OneResponse`, `UniResponse`
+## `OneResponse`, `UniResponse`, `response`
 
 The response type defined by [ApiResponse](https://docs.rs/poem-openapi/latest/poem_openapi/derive.ApiResponse.html) has too much control granularity and is less reusable. Either one request defines one response, which is too much code, or it defines a response that contains all possible responses, which can obscure the really important ones.
 
 Because of such shortcomings, 3 helpers are provided in this repository.
 
-- `UniResponse` is an `enum` with 60 generic type slots corresponding to 60 response status codes, and the default type is not displayed in Swagger if no generic type is inserted into the corresponding status code.
 - `OneResponse` is a simplification of `ApiResponse`, where only one response type corresponding to one status code can be defined.
-- `response` is a functional macro for insert really response type into `UniResponse` type slots at the function return type.
+- `UniResponse` is an `enum` with 60 generic type slots corresponding to 60 response status codes.
+- `response` is a functional macro for insert response type that defined by `OneResponse` into `UniResponse` type slots.
 
 ### Example
 
@@ -143,12 +129,15 @@ impl Api {
 
 ```rust
 use poem::IntoResponse;
+use poem_extensions::{
+    response, OneResponse,
+    UniResponse::{T200, T400, T404},
+};
 use poem_openapi::{
     param::Query,
     payload::{Payload, PlainText},
     OpenApi,
 };
-use poem_openapi_response::{response, OneResponse, UniResponse::*};
 
 #[derive(OneResponse)]
 #[oai(status = 400)]

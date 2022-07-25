@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "poem-openapi-response",
-    "poem-openapi-macro",
-    "poem-openapi-test",
+    "poem-extensions",
+    "poem-extensions-macro",
+    "poem-extensions-test",
 ]
