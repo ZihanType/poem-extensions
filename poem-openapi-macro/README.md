@@ -1,1 +1,5 @@
-# see [poem-extensions](https://github.com/ZihanType/poem-extensions) README.md
+# poem-openapi-macro was renamed poem-extensions-macro
+
+## Deprecated
+
+poem-openapi-macro was renamed poem-extensions-macro. So you should use the [poem-extensions-macro](https://crates.io/crates/poem-extensions-macro) crate instead of this one.
