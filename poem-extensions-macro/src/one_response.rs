@@ -68,7 +68,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
 
     let into_response_arm;
     let meta_response_obj;
-    let mut schema_type = Vec::new();
+    let register_fn_body;
 
     let struct_description = get_description(&args.attrs)?;
     let struct_description = optional_literal(&struct_description);
@@ -151,7 +151,9 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     headers: ::std::vec![#(#meta_headers),*],
                 }
             };
-            schema_type.push(media_ty);
+            register_fn_body = quote! {
+                <#media_ty as ::poem_openapi::ResponseContent>::register(registry);
+            };
         }
         0 => {
             // Field
@@ -177,6 +179,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     headers: ::std::vec![#(#meta_headers),*],
                 }
             };
+            register_fn_body = quote!();
         }
         _ => {
             return Err(
@@ -221,7 +224,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                 }
 
                 fn register(registry: &mut ::poem_openapi::registry::Registry) {
-                    #(<#schema_type as ::poem_openapi::ResponseContent>::register(registry);)*
+                    #register_fn_body
                 }
 
                 #bad_request_handler
