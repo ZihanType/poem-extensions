@@ -1,5 +1,7 @@
 # poem-extensions
 
+[![Crates.io version](https://img.shields.io/crates/v/poem-extensions.svg?style=flat-square)](https://crates.io/crates/poem-extensions)
+
 Add some extensions to Poem web framework.
 
 ## `UniOpenApi`
