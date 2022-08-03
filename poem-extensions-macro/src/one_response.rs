@@ -47,6 +47,8 @@ struct ResponseArgs {
     content_type: Option<String>,
     #[darling(default, multiple, rename = "header")]
     headers: Vec<ExtraHeader>,
+    #[darling(default)]
+    actual_type: Option<Type>,
 }
 
 pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
@@ -129,7 +131,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
             // Field(media)
             let media_ty = &value_fields[0].ty;
             let (update_response_content_type, update_meta_content_type) =
-                update_content_type(args.content_type.as_deref());
+                update_content_type(args.content_type.as_deref(), args.actual_type.as_ref());
             into_response_arm = quote! {
                 #struct_ident(media, #(#matched_header_idents),*) => {
                     let mut resp = ::poem::web::IntoResponse::into_response(media);
@@ -302,24 +304,40 @@ fn optional_literal_string(s: &Option<impl AsRef<str>>) -> TokenStream {
     }
 }
 
-fn update_content_type(content_type: Option<&str>) -> (TokenStream, TokenStream) {
-    let update_response_content_type = match content_type {
-        Some(content_type) => {
+fn update_content_type(
+    content_type: Option<&str>,
+    actual_type: Option<&Type>,
+) -> (TokenStream, TokenStream) {
+    let (update_response_content_type, update_meta_content_type) = if let Some(content_type) =
+        content_type
+    {
+        (
             quote! {
                 resp.headers_mut().insert(::poem::http::header::CONTENT_TYPE,
                     ::poem::http::HeaderValue::from_static(#content_type));
-            }
-        }
-        None => quote!(),
-    };
-
-    let update_meta_content_type = match content_type {
-        Some(content_type) => quote! {
-            if let Some(media_type) = content.get_mut(0) {
-                media_type.content_type = #content_type;
-            }
-        },
-        None => quote!(),
+            },
+            quote! {
+                if let Some(mt) = content.get_mut(0) {
+                    mt.content_type = #content_type;
+                }
+            },
+        )
+    } else if let Some(actual_type) = actual_type {
+        (
+            quote! {
+                resp.headers_mut().insert(::poem::http::header::CONTENT_TYPE,
+                    ::poem::http::HeaderValue::from_static(<#actual_type as ::poem_openapi::payload::Payload>::CONTENT_TYPE)
+                );
+            },
+            quote! {
+                if let Some(mt) = content.get_mut(0) {
+                    mt.content_type = <#actual_type as ::poem_openapi::payload::Payload>::CONTENT_TYPE;
+                    mt.schema = <#actual_type as ::poem_openapi::payload::Payload>::schema_ref();
+                }
+            },
+        )
+    } else {
+        (quote! {}, quote! {})
     };
 
     (update_response_content_type, update_meta_content_type)
