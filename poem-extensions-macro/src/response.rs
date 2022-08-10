@@ -49,7 +49,8 @@ impl ToTokens for Responses {
 }
 
 pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
-    let status_to_type: HashMap<&u16, &syn::Type> = (&args.responses)
+    let status_to_type: HashMap<&u16, &syn::Type> = args
+        .responses
         .iter()
         .map(|r| (&r.status_code, &r.response_type))
         .collect();
