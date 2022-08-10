@@ -1,4 +1,3 @@
-use crate::{GeneratorResult, SUPPORT_STATUS};
 use darling::{
     ast::{Data, Fields},
     util::{Ignored, SpannedValue},
@@ -7,6 +6,8 @@ use darling::{
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{Attribute, DeriveInput, Generics, Lit, Meta, Path, Type};
+
+use crate::{GeneratorResult, SUPPORT_STATUS};
 
 #[derive(FromMeta, Debug)]
 struct ExtraHeader {

@@ -1,7 +1,9 @@
-use crate::SUPPORT_STATUS;
+use std::collections::HashMap;
+
 use proc_macro2::{Literal, Punct, Spacing, TokenStream};
 use quote::{quote, ToTokens, TokenStreamExt};
-use std::collections::HashMap;
+
+use crate::SUPPORT_STATUS;
 
 pub(crate) struct Responses {
     responses: Vec<Response>,
