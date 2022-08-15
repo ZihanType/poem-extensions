@@ -154,8 +154,14 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     headers: ::std::vec![#(#meta_headers),*],
                 }
             };
-            register_fn_body = quote! {
-                <#media_ty as ::poem_openapi::ResponseContent>::register(registry);
+            if let Some(actual_type) = args.actual_type.as_ref() {
+                register_fn_body = quote! {
+                    <#actual_type as ::poem_openapi::ResponseContent>::register(registry);
+                };
+            } else {
+                register_fn_body = quote! {
+                    <#media_ty as ::poem_openapi::ResponseContent>::register(registry);
+                };
             };
         }
         0 => {
