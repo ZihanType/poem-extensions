@@ -1,9 +1,11 @@
+mod api;
 mod error;
 mod one_response;
 mod response;
 mod uni_open_api;
 mod uni_response;
 
+use api::Apis;
 use error::GeneratorResult;
 use proc_macro::TokenStream;
 use response::Responses;
@@ -14,6 +16,14 @@ use uni_response::SUPPORT_STATUS;
 pub fn derive_uni_open_api(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as DeriveInput);
     uni_open_api::generate(&args)
+        .unwrap_or_else(|e| e.to_compile_error())
+        .into()
+}
+
+#[proc_macro]
+pub fn api(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as Apis);
+    api::generate(&args)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }

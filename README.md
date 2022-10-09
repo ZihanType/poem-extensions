@@ -4,9 +4,9 @@
 
 Add some extensions to Poem web framework.
 
-## `UniOpenApi`
+## `UniOpenApi`, `api`
 
-`UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), `UniOpenApi` is available to facilitate developers to define an unlimited number of `OpenApi` implementations.
+`UniOpenApi` unifies multiple `struct`s that implement [`OpenApi`](https://docs.rs/poem-openapi/latest/poem_openapi/attr.OpenApi.html) into one `struct`. Because using the [`OpenApiService::new()`](https://docs.rs/poem-openapi/latest/poem_openapi/struct.OpenApiService.html#method.new) method can only convert a tuple with at most 16 elements into an [`Endpoint`](https://docs.rs/poem/latest/poem/endpoint/trait.Endpoint.html#), `UniOpenApi` is available to facilitate developers to define an unlimited number of `OpenApi` implementations. `api` is a simplified version of `UniOpenApi`, combining declaration and invocation into one.
 
 ### Example
 
@@ -40,7 +40,7 @@ let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
 #### after
 
 ```rust
-use poem_extensions::UniOpenApi;
+use poem_extensions::{api, UniOpenApi};
 use poem_openapi::{OpenApi, OpenApiService};
 
 struct Api1;
@@ -58,12 +58,14 @@ struct Api3;
 #[OpenApi]
 impl Api3 {}
 
-/// unlimit
+/// struct mode, support generics
 #[derive(UniOpenApi)]
 struct Union(Api1, Api2, Api3);
 
-/// unlimit
 let api = Union(Api1, Api2, Api3);
+
+/// ... or tuple mode, not support generics
+let api = api!(Api1, Api2, Api3);
 
 let api_service = OpenApiService::new(api, "Combined APIs", "1.0")
         .server("http://localhost:3000/api");

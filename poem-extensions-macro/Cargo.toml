@@ -1,6 +1,6 @@
 [package]
 name = "poem-extensions-macro"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["zihan <ZihanType@proton.me>"]
 description = "Macros for poem-extensions."
@@ -15,8 +15,8 @@ repository = "https://github.com/ZihanType/poem-extensions"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = { version = "1.0.43", default-features = false }
+proc-macro2 = { version = "1.0.46", default-features = false }
 quote = { version = "1.0.21", default-features = false }
-syn = { version = "1.0.99", default-features = false }
+syn = { version = "1.0.102", default-features = false }
 darling = { version = "0.14.1", default-features = false }
-thiserror = { version = "1.0.32", default-features = false }
+thiserror = { version = "1.0.37", default-features = false }

@@ -1,5 +1,5 @@
 use poem::{http::Method, test::TestClient};
-use poem_extensions::UniOpenApi;
+use poem_extensions::{api, UniOpenApi};
 use poem_openapi::{payload::Json, registry::MetaApi, OpenApi, OpenApiService};
 
 #[tokio::test]
@@ -105,4 +105,28 @@ async fn generic() {
     let resp = cli.post("/bbb").send().await;
     resp.assert_status_is_ok();
     resp.assert_json("ServiceImplB").await;
+}
+
+#[tokio::test]
+async fn path_and_method_use_macro() {
+    struct A;
+
+    #[OpenApi]
+    impl A {
+        #[oai(path = "/helloA", method = "get")]
+        async fn hello(&self) {}
+    }
+
+    struct B;
+
+    #[OpenApi]
+    impl B {
+        #[oai(path = "/helloB", method = "post")]
+        async fn hello(&self) {}
+    }
+
+    let ep = OpenApiService::new(api!(A, B), "test", "1.0");
+    let cli = TestClient::new(ep);
+    cli.get("/helloA").send().await.assert_status_is_ok();
+    cli.post("/helloB").send().await.assert_status_is_ok();
 }
