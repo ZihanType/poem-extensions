@@ -1,13 +1,13 @@
 [package]
 name = "poem-extensions-macro"
-version = "0.3.0"
-edition = "2021"
-authors = ["zihan <ZihanType@proton.me>"]
 description = "Macros for poem-extensions."
 keywords = ["poem", "open-api", "swagger", "macro"]
-license = "MIT/Apache-2.0"
-homepage = "https://github.com/ZihanType/poem-extensions"
-repository = "https://github.com/ZihanType/poem-extensions"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,8 +15,8 @@ repository = "https://github.com/ZihanType/poem-extensions"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = { version = "1.0.46", default-features = false }
-quote = { version = "1.0.21", default-features = false }
-syn = { version = "1.0.102", default-features = false }
-darling = { version = "0.14.1", default-features = false }
-thiserror = { version = "1.0.37", default-features = false }
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
+darling.workspace = true
+thiserror.workspace = true

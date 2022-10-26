@@ -1,17 +1,17 @@
 [package]
 name = "poem-extensions"
-version = "0.3.0"
-edition = "2021"
-authors = ["zihan <ZihanType@proton.me>"]
 description = "Extensions for Poem."
 keywords = ["poem", "open-api", "web", "swagger"]
-license = "MIT/Apache-2.0"
-homepage = "https://github.com/ZihanType/poem-extensions"
-repository = "https://github.com/ZihanType/poem-extensions"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-poem = { version = "1.3.45", default-features = false }
-poem-openapi = { version = "2.0.16", default-features = false }
-poem-extensions-macro = { path = "../poem-extensions-macro", version = "0.3.0" }
+poem.workspace = true
+poem-openapi.workspace = true
+poem-extensions-macro.workspace = true

@@ -1,13 +1,17 @@
 [package]
 name = "poem-extensions-test"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-poem = { version = "1.3.45", default-features = false, features = ["test"] }
-poem-openapi = { version = "2.0.16", default-features = false }
-poem-extensions = { path = "../poem-extensions" }
-tokio = { version = "1.21.2", features = ["full"] }
-serde_json = { version = "1.0.85", default-features = false }
+poem = { workspace = true, features = ["test"] }
+poem-openapi.workspace = true
+poem-extensions.workspace = true
+tokio = { workspace = true, features = ["full"] }
+serde_json.workspace = true
