@@ -54,7 +54,7 @@ fn meta() {
                 description: "A\nB\n\nC",
                 status: Some(400),
                 content: vec![MetaMediaType {
-                    content_type: "application/json",
+                    content_type: "application/json; charset=utf-8",
                     schema: MetaSchemaRef::Reference("BadRequestResult".to_string())
                 }],
                 headers: vec![]
@@ -208,7 +208,7 @@ async fn generic() {
                 description: "",
                 status: Some(200),
                 content: vec![MetaMediaType {
-                    content_type: "application/json",
+                    content_type: "application/json; charset=utf-8",
                     schema: MetaSchemaRef::Inline(Box::new(MetaSchema::new("string")))
                 }],
                 headers: vec![]
@@ -376,14 +376,14 @@ async fn actual_type() {
     assert_eq!(response.status, Some(200));
 
     let media = &response.content[0];
-    assert_eq!(media.content_type, "application/json");
+    assert_eq!(media.content_type, "application/json; charset=utf-8");
     assert_eq!(media.schema, <Json<MyObj>>::schema_ref());
 
     let ep = OpenApiService::new(Api, "test", "1.0");
     let cli = TestClient::new(ep);
     let resp = cli.get("/").send().await;
 
-    resp.assert_content_type("application/json");
+    resp.assert_content_type("application/json; charset=utf-8");
     resp.assert_json(&serde_json::json!({ "value": 100 })).await;
 
     let mut registry = Registry::new();
