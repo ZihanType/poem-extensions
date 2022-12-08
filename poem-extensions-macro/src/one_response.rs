@@ -354,10 +354,7 @@ fn get_status(span: Span, status: u16) -> GeneratorResult<TokenStream> {
     if !SUPPORT_STATUS.contains(&status) {
         return Err(syn::Error::new(
             span,
-            format!(
-                "Invalid status code, support status code: {:?}",
-                SUPPORT_STATUS
-            ),
+            format!("Invalid status code, support status code: {SUPPORT_STATUS:?}"),
         )
         .into());
     }

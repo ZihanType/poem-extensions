@@ -64,8 +64,7 @@ pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
         return Err(syn::Error::new_spanned(
             args,
             format!(
-                "\n  support status code: {:?}\nunsupport status code: {:?}",
-                SUPPORT_STATUS, unsupport_status
+                "\n  support status code: {SUPPORT_STATUS:?}\nunsupport status code: {unsupport_status:?}"
             ),
         ));
     }
