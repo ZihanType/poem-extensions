@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use poem::{
     http::{HeaderValue, StatusCode},
     test::TestClient,
@@ -306,6 +308,7 @@ async fn as_error() {
     #[oai(status = 201)]
     struct Created;
 
+    /// Bad gateway
     #[derive(OneResponse, Debug)]
     #[oai(status = 502)]
     struct BadGateway;
@@ -344,6 +347,27 @@ async fn as_error() {
     let responses = &meta.paths[1].operations[0].responses.responses;
     assert_eq!(responses[0].status, Some(200));
     assert_eq!(responses[1].status, Some(502));
+
+    let err: Error = BadGateway.into();
+    assert_eq!(err.to_string(), "Bad gateway");
+}
+
+#[tokio::test]
+async fn display() {
+    #[derive(Debug, OneResponse)]
+    #[oai(status = 400, display)]
+    struct InvalidValue(Json<i32>);
+
+    impl Display for InvalidValue {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                InvalidValue(value) => write!(f, "invalid value: {}", value.0),
+            }
+        }
+    }
+
+    let err: Error = InvalidValue(Json(123)).into();
+    assert_eq!(err.to_string(), "invalid value: 123");
 }
 
 #[tokio::test]

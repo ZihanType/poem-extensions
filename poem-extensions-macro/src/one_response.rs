@@ -50,6 +50,8 @@ struct ResponseArgs {
     headers: Vec<ExtraHeader>,
     #[darling(default)]
     actual_type: Option<Type>,
+    #[darling(default)]
+    display: bool,
 }
 
 pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
@@ -72,6 +74,7 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
     let into_response_arm;
     let meta_response_obj;
     let register_fn_body;
+    let error_message_arm;
 
     let struct_description = get_description(&args.attrs)?;
     let struct_description = optional_literal(&struct_description);
@@ -142,6 +145,9 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     resp
                 }
             };
+            error_message_arm = quote! {
+                #struct_ident(media, #(#matched_header_idents),*) => #struct_description,
+            };
             meta_response_obj = quote! {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
@@ -180,6 +186,9 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
                     resp
                 }
             };
+            error_message_arm = quote! {
+                #field => #struct_description,
+            };
             meta_response_obj = quote! {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
@@ -213,6 +222,18 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
         }
     });
 
+    let error_msg = if args.display {
+        quote! {
+            let error_msg = ::std::option::Option::Some(::std::string::ToString::to_string(&resp));
+        }
+    } else {
+        quote! {
+            let error_msg: ::std::option::Option<&str> = match &resp {
+                #error_message_arm
+            };
+        }
+    };
+
     let expanded = {
         quote! {
             impl #impl_generics ::poem::web::IntoResponse for #struct_ident #ty_generics #where_clause {
@@ -242,7 +263,12 @@ pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
             impl #impl_generics ::std::convert::From<#struct_ident #ty_generics> for ::poem::error::Error #where_clause {
                 fn from(resp: #struct_ident #ty_generics) -> ::poem::error::Error {
                     use ::poem::web::IntoResponse;
-                    ::poem::error::Error::from_response(resp.into_response())
+                    #error_msg
+                    let mut err = ::poem::error::Error::from_response(resp.into_response());
+                    if let ::std::option::Option::Some(error_msg) = error_msg {
+                        err.set_error_message(error_msg);
+                    }
+                    err
                 }
             }
         }
