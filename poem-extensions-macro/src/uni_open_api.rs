@@ -53,7 +53,7 @@ pub(crate) fn generate(args: &DeriveInput) -> syn::Result<TokenStream> {
                 )*
             }
 
-            fn add_routes(self, route_table: &mut ::std::collections::HashMap<::poem::http::Method, ::std::collections::HashMap<::std::string::String, ::poem::endpoint::BoxEndpoint<'static>>>) {
+            fn add_routes(self, route_table: &mut ::std::collections::HashMap<::std::string::String, ::std::collections::HashMap<::poem::http::Method, ::poem::endpoint::BoxEndpoint<'static>>>) {
                 #(
                     let route = self.#indexes.add_routes(route_table);
                 )*
