@@ -1,11 +1,8 @@
 [workspace]
-members = [
-    "poem-extensions",
-    "poem-extensions-macro",
-]
+members = ["poem-extensions", "poem-extensions-macro"]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 authors = ["zihan <ZihanType@proton.me>"]
 license = "MIT/Apache-2.0"
@@ -13,8 +10,8 @@ homepage = "https://github.com/ZihanType/poem-extensions"
 repository = "https://github.com/ZihanType/poem-extensions"
 
 [workspace.dependencies]
-poem-extensions = { version = "0.5.0", path = "./poem-extensions" }
-poem-extensions-macro = { version = "0.5.0", path = "./poem-extensions-macro" }
+poem-extensions = { version = "0.6.0", path = "./poem-extensions" }
+poem-extensions-macro = { version = "0.6.0", path = "./poem-extensions-macro" }
 
 poem = { version = "1.3.54", default-features = false }
 poem-openapi = { version = "2.0.25", default-features = false }
@@ -23,5 +20,8 @@ quote = { version = "1.0.23", default-features = false }
 syn = { version = "1.0.107", default-features = false }
 darling = { version = "0.14.2", default-features = false }
 thiserror = { version = "1.0.38", default-features = false }
-tokio = { version = "1.25.0", default-features = false, features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.25.0", default-features = false, features = [
+    "macros",
+    "rt-multi-thread",
+] }
 serde_json = { version = "1.0.91", default-features = false }
