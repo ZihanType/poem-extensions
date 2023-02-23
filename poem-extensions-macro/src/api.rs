@@ -1,5 +1,5 @@
-use proc_macro2::{Punct, Spacing, TokenStream};
-use quote::{quote, ToTokens, TokenStreamExt};
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
 
 pub(crate) struct Apis {
     apis: Vec<syn::Ident>,
@@ -26,13 +26,13 @@ impl ToTokens for Apis {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         self.apis.iter().for_each(|api| {
             api.to_tokens(tokens);
-            tokens.append(Punct::new(',', Spacing::Alone));
+            <syn::Token![,]>::default().to_tokens(tokens);
         })
     }
 }
 
 pub(crate) fn generate(args: &Apis) -> syn::Result<TokenStream> {
-    let apis: Vec<TokenStream> = args.apis.iter().map(|id| quote!(#id)).collect();
+    let apis = &args.apis;
 
     let expand = quote! {
         {

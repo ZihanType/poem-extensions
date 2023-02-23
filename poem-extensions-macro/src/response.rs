@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use proc_macro2::{Literal, Punct, Spacing, TokenStream};
+use proc_macro2::{Literal, TokenStream};
 use quote::{quote, ToTokens, TokenStreamExt};
 
 use crate::SUPPORT_STATUS;
@@ -41,35 +41,31 @@ impl ToTokens for Responses {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         self.responses.iter().for_each(|response| {
             tokens.append(Literal::u16_unsuffixed(response.status_code));
-            tokens.append(Punct::new(':', Spacing::Alone));
+            <syn::Token![:]>::default().to_tokens(tokens);
             response.response_type.to_tokens(tokens);
-            tokens.append(Punct::new(',', Spacing::Alone));
+            <syn::Token![,]>::default().to_tokens(tokens);
         })
     }
 }
 
 pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
-    let status_to_type: HashMap<&u16, &syn::Type> = args
-        .responses
-        .iter()
-        .map(|r| (&r.status_code, &r.response_type))
-        .collect();
-
-    let unsupport_status: Vec<_> = status_to_type
-        .keys()
-        .filter(|s| !SUPPORT_STATUS.contains(s))
-        .collect();
+    let (status_to_type, unsupport_status): (HashMap<&u16, &syn::Type>, HashMap<&u16, &syn::Type>) =
+        args.responses
+            .iter()
+            .map(|r| (&r.status_code, &r.response_type))
+            .partition(|(s, _)| SUPPORT_STATUS.contains(s));
 
     if !unsupport_status.is_empty() {
         return Err(syn::Error::new_spanned(
             args,
             format!(
-                "\n  support status code: {SUPPORT_STATUS:?}\nunsupport status code: {unsupport_status:?}"
+                "\n  support status code: {SUPPORT_STATUS:?}\nunsupport status code: {:?}",
+                unsupport_status.keys(),
             ),
         ));
     }
 
-    let response_types: Vec<TokenStream> = SUPPORT_STATUS
+    let response_types = SUPPORT_STATUS
         .iter()
         .map(|status| match status_to_type.get(status) {
             Some(response_type) => {
@@ -78,8 +74,7 @@ pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
             None => {
                 quote!(::poem_extensions::Empty)
             }
-        })
-        .collect();
+        });
 
     let expand = quote! {
         ::poem_extensions::UniResponse<
