@@ -15,7 +15,7 @@ use uni_response::SUPPORT_STATUS;
 #[proc_macro_derive(UniOpenApi)]
 pub fn derive_uni_open_api(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as DeriveInput);
-    uni_open_api::generate(&args)
+    uni_open_api::generate(args)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }
@@ -23,7 +23,7 @@ pub fn derive_uni_open_api(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn api(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as Apis);
-    api::generate(&args)
+    api::generate(args)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }
@@ -31,16 +31,15 @@ pub fn api(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(OneResponse, attributes(oai))]
 pub fn derive_one_response(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as DeriveInput);
-    match one_response::generate(&args) {
-        Ok(stream) => stream.into(),
-        Err(err) => err.write_errors().into(),
-    }
+    one_response::generate(args)
+        .unwrap_or_else(|e| e.write_errors())
+        .into()
 }
 
 #[proc_macro]
 pub fn response(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as Responses);
-    response::generate(&args)
+    response::generate(args)
         .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }

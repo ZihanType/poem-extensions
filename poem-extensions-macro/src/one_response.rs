@@ -54,8 +54,8 @@ struct ResponseArgs {
     display: bool,
 }
 
-pub(crate) fn generate(args: &DeriveInput) -> GeneratorResult<TokenStream> {
-    let args: ResponseArgs = ResponseArgs::from_derive_input(args)?;
+pub(crate) fn generate(args: DeriveInput) -> GeneratorResult<TokenStream> {
+    let args: ResponseArgs = ResponseArgs::from_derive_input(&args)?;
     let (impl_generics, ty_generics, where_clause) = args.generics.split_for_impl();
     let struct_ident = &args.ident;
     let status = get_status(struct_ident.span(), args.status)?;

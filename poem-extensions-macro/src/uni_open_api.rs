@@ -1,34 +1,36 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Member};
+use syn::{
+    punctuated::Punctuated, Data, DeriveInput, Field, Fields, FieldsUnnamed, Member, Token, Type,
+};
 
-type StructFields = syn::punctuated::Punctuated<syn::Field, syn::Token![,]>;
+type StructFields = Punctuated<Field, Token![,]>;
 
 fn get_fields(args: &DeriveInput) -> syn::Result<&StructFields> {
     let struct_ident = &args.ident;
 
     match &args.data {
-        syn::Data::Enum(_) => Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
-        syn::Data::Union(_) => Err(syn::Error::new_spanned(struct_ident, "union not supported")),
-        syn::Data::Struct(ds) => match ds.fields {
-            syn::Fields::Named(_) => Err(syn::Error::new_spanned(
+        Data::Enum(_) => Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
+        Data::Union(_) => Err(syn::Error::new_spanned(struct_ident, "union not supported")),
+        Data::Struct(ds) => match ds.fields {
+            Fields::Named(_) => Err(syn::Error::new_spanned(
                 struct_ident,
                 "named fields not supported",
             )),
-            syn::Fields::Unit => Err(syn::Error::new_spanned(
+            Fields::Unit => Err(syn::Error::new_spanned(
                 struct_ident,
                 "unit struct not supported",
             )),
-            syn::Fields::Unnamed(syn::FieldsUnnamed { ref unnamed, .. }) => Ok(unnamed),
+            Fields::Unnamed(FieldsUnnamed { ref unnamed, .. }) => Ok(unnamed),
         },
     }
 }
 
-pub(crate) fn generate(args: &DeriveInput) -> syn::Result<TokenStream> {
+pub(crate) fn generate(args: DeriveInput) -> syn::Result<TokenStream> {
     let struct_ident = &args.ident;
     let (impl_generics, ty_generics, where_clause) = args.generics.split_for_impl();
 
-    let (indexes, types): (Vec<Member>, Vec<&syn::Type>) = get_fields(args)?
+    let (indexes, types): (Vec<Member>, Vec<&Type>) = get_fields(&args)?
         .iter()
         .map(|f| &f.ty)
         .enumerate()

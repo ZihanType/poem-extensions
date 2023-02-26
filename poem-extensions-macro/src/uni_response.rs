@@ -53,6 +53,7 @@ pub(crate) fn generate() -> TokenStream {
             }
         }
 
+        #[track_caller]
         fn meta_helper<T: ::poem_openapi::ApiResponse + 'static>(
             outer_responses: &mut ::std::vec::Vec<::poem_openapi::registry::MetaResponse>,
             outer_status: u16,

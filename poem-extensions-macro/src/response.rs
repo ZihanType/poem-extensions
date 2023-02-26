@@ -1,63 +1,75 @@
 use std::collections::HashMap;
 
-use proc_macro2::{Literal, TokenStream};
-use quote::{quote, ToTokens, TokenStreamExt};
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
+use syn::{
+    parse::{Parse, ParseStream},
+    punctuated::Punctuated,
+    LitInt, Token, Type,
+};
 
 use crate::SUPPORT_STATUS;
 
 pub(crate) struct Responses {
-    responses: Vec<Response>,
+    responses: Punctuated<Response, Token![,]>,
 }
 
-struct Response {
-    status_code: u16,
-    response_type: syn::Type,
-}
-
-impl syn::parse::Parse for Responses {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let mut responses = vec![];
-
-        while !input.is_empty() {
-            let status_code: syn::LitInt = input.parse()?;
-            input.parse::<syn::Token!(:)>()?;
-            let response_type: syn::Type = input.parse()?;
-
-            responses.push(Response {
-                status_code: status_code.base10_parse::<u16>()?,
-                response_type,
-            });
-
-            if !input.is_empty() {
-                input.parse::<syn::Token!(,)>()?;
-            }
-        }
-
-        Ok(Responses { responses })
+impl Parse for Responses {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Responses {
+            responses: input.parse_terminated(Response::parse)?,
+        })
     }
 }
 
 impl ToTokens for Responses {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        self.responses.iter().for_each(|response| {
-            tokens.append(Literal::u16_unsuffixed(response.status_code));
-            <syn::Token![:]>::default().to_tokens(tokens);
-            response.response_type.to_tokens(tokens);
-            <syn::Token![,]>::default().to_tokens(tokens);
+        self.responses.to_tokens(tokens);
+    }
+}
+
+struct Response {
+    status_code: u16,
+    colon_token: Token![:],
+    response_type: Type,
+}
+
+impl Parse for Response {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(Self {
+            status_code: input.parse::<LitInt>()?.base10_parse::<u16>()?,
+            colon_token: input.parse()?,
+            response_type: input.parse()?,
         })
     }
 }
 
-pub(crate) fn generate(args: &Responses) -> syn::Result<TokenStream> {
-    let (status_to_type, unsupport_status): (HashMap<&u16, &syn::Type>, HashMap<&u16, &syn::Type>) =
-        args.responses
-            .iter()
-            .map(|r| (&r.status_code, &r.response_type))
-            .partition(|(s, _)| SUPPORT_STATUS.contains(s));
+impl ToTokens for Response {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.status_code.to_tokens(tokens);
+        self.colon_token.to_tokens(tokens);
+        self.response_type.to_tokens(tokens);
+    }
+}
+
+pub(crate) fn generate(args: Responses) -> syn::Result<TokenStream> {
+    let (status_to_type, unsupport_status): (HashMap<_, _>, HashMap<_, _>) = args
+        .responses
+        .iter()
+        .map(|r| {
+            let Response {
+                status_code,
+                response_type,
+                ..
+            } = r;
+
+            (status_code, response_type)
+        })
+        .partition(|(s, _)| SUPPORT_STATUS.contains(s));
 
     if !unsupport_status.is_empty() {
         return Err(syn::Error::new_spanned(
-            args,
+            &args,
             format!(
                 "\n  support status code: {SUPPORT_STATUS:?}\nunsupport status code: {:?}",
                 unsupport_status.keys(),
