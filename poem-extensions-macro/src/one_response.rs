@@ -5,7 +5,7 @@ use darling::{
 };
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{Attribute, DeriveInput, Generics, Lit, Meta, Path, Type};
+use syn::{Attribute, DeriveInput, Expr, ExprLit, Generics, Lit, Meta, MetaNameValue, Path, Type};
 
 use crate::{GeneratorResult, SUPPORT_STATUS};
 
@@ -13,7 +13,6 @@ use crate::{GeneratorResult, SUPPORT_STATUS};
 struct ExtraHeader {
     name: String,
 
-    #[darling(rename = "type")]
     ty: SpannedValue<String>,
     #[darling(default)]
     description: Option<String>,
@@ -297,16 +296,21 @@ fn parse_fields(
 fn get_description(attrs: &[Attribute]) -> syn::Result<Option<String>> {
     let mut full_docs = String::new();
     for attr in attrs {
-        if attr.path.is_ident("doc") {
-            if let Meta::NameValue(nv) = attr.parse_meta()? {
-                if let Lit::Str(doc) = nv.lit {
-                    let doc = doc.value();
-                    let doc_str = doc.trim();
-                    if !full_docs.is_empty() {
-                        full_docs += "\n";
-                    }
-                    full_docs += doc_str;
+        if attr.path().is_ident("doc") {
+            if let Meta::NameValue(MetaNameValue {
+                value:
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(doc), ..
+                    }),
+                ..
+            }) = &attr.meta
+            {
+                let doc = doc.value();
+                let doc_str = doc.trim();
+                if !full_docs.is_empty() {
+                    full_docs += "\n";
                 }
+                full_docs += doc_str;
             }
         }
     }

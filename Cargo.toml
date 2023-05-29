@@ -8,20 +8,21 @@ authors = ["zihan <ZihanType@proton.me>"]
 license = "MIT/Apache-2.0"
 homepage = "https://github.com/ZihanType/poem-extensions"
 repository = "https://github.com/ZihanType/poem-extensions"
+include = ["src/**/*", "Cargo.toml"]
 
 [workspace.dependencies]
 poem-extensions = { version = "0.6.0", path = "./poem-extensions" }
 poem-extensions-macro = { version = "0.6.0", path = "./poem-extensions-macro" }
 
-poem = { version = "1.3.55", default-features = false }
-poem-openapi = { version = "2.0.26", default-features = false }
-proc-macro2 = { version = "1.0.51", default-features = false }
-quote = { version = "1.0.23", default-features = false }
-syn = { version = "1.0.109", default-features = false }
-darling = { version = "0.14.3", default-features = false }
-thiserror = { version = "1.0.38", default-features = false }
-tokio = { version = "1.25.0", default-features = false, features = [
+poem = { version = "1", default-features = false }
+poem-openapi = { version = "2", default-features = false }
+proc-macro2 = { version = "1", default-features = false }
+quote = { version = "1", default-features = false }
+syn = { version = "2", default-features = false }
+darling = { version = "0.20", default-features = false }
+thiserror = { version = "1", default-features = false }
+tokio = { version = "1", default-features = false, features = [
     "macros",
     "rt-multi-thread",
 ] }
-serde_json = { version = "1.0.93", default-features = false }
+serde_json = { version = "1", default-features = false }

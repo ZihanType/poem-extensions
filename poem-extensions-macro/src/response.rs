@@ -17,7 +17,7 @@ pub(crate) struct Responses {
 impl Parse for Responses {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(Responses {
-            responses: input.parse_terminated(Response::parse)?,
+            responses: input.parse_terminated(Response::parse, Token![,])?,
         })
     }
 }

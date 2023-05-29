@@ -13,7 +13,7 @@ pub(crate) struct Apis {
 impl Parse for Apis {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(Apis {
-            apis: input.parse_terminated(Ident::parse)?,
+            apis: input.parse_terminated(Ident::parse, Token![,])?,
         })
     }
 }
