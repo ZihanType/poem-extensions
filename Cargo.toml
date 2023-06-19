@@ -3,7 +3,7 @@ resolver = "2"
 members = ["poem-extensions", "poem-extensions-macro"]
 
 [workspace.package]
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 authors = ["zihan <ZihanType@proton.me>"]
 license = "MIT/Apache-2.0"
@@ -12,8 +12,8 @@ repository = "https://github.com/ZihanType/poem-extensions"
 include = ["src/**/*", "Cargo.toml"]
 
 [workspace.dependencies]
-poem-extensions = { version = "0.7.0", path = "./poem-extensions" }
-poem-extensions-macro = { version = "0.7.0", path = "./poem-extensions-macro" }
+poem-extensions = { version = "0.7.1", path = "./poem-extensions" }
+poem-extensions-macro = { version = "0.7.1", path = "./poem-extensions-macro" }
 
 poem = { version = "1", default-features = false }
 poem-openapi = { version = "2", default-features = false }
