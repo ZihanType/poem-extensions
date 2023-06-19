@@ -1,41 +1,46 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{
-    punctuated::Punctuated, Data, DeriveInput, Field, Fields, FieldsUnnamed, Member, Token, Type,
-};
+use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Member, Type};
 
-type StructFields = Punctuated<Field, Token![,]>;
-
-fn get_fields(args: &DeriveInput) -> syn::Result<&StructFields> {
+fn get_fields(args: &DeriveInput) -> syn::Result<(Vec<Member>, Vec<&Type>)> {
     let struct_ident = &args.ident;
 
-    match &args.data {
-        Data::Enum(_) => Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
-        Data::Union(_) => Err(syn::Error::new_spanned(struct_ident, "union not supported")),
+    let fields = match &args.data {
+        Data::Enum(_) => return Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
+        Data::Union(_) => return Err(syn::Error::new_spanned(struct_ident, "union not supported")),
         Data::Struct(ds) => match ds.fields {
-            Fields::Named(_) => Err(syn::Error::new_spanned(
-                struct_ident,
-                "named fields not supported",
-            )),
-            Fields::Unit => Err(syn::Error::new_spanned(
-                struct_ident,
-                "unit struct not supported",
-            )),
-            Fields::Unnamed(FieldsUnnamed { ref unnamed, .. }) => Ok(unnamed),
+            Fields::Unit => {
+                return Err(syn::Error::new_spanned(
+                    struct_ident,
+                    "unit struct not supported",
+                ))
+            }
+            Fields::Named(FieldsNamed { ref named, .. }) => named,
+            Fields::Unnamed(FieldsUnnamed { ref unnamed, .. }) => unnamed,
         },
-    }
+    };
+
+    let fields = fields
+        .iter()
+        .enumerate()
+        .map(|(idx, f)| {
+            let member = match &f.ident {
+                Some(ident) => Member::from(ident.clone()),
+                None => Member::from(idx),
+            };
+
+            (member, &f.ty)
+        })
+        .unzip();
+
+    Ok(fields)
 }
 
 pub(crate) fn generate(args: DeriveInput) -> syn::Result<TokenStream> {
     let struct_ident = &args.ident;
     let (impl_generics, ty_generics, where_clause) = args.generics.split_for_impl();
 
-    let (indexes, types): (Vec<Member>, Vec<&Type>) = get_fields(&args)?
-        .iter()
-        .map(|f| &f.ty)
-        .enumerate()
-        .map(|(idx, ty)| (Member::from(idx), ty))
-        .unzip();
+    let (members, types) = get_fields(&args)?;
 
     let cap = types.len();
 
@@ -57,7 +62,7 @@ pub(crate) fn generate(args: DeriveInput) -> syn::Result<TokenStream> {
 
             fn add_routes(self, route_table: &mut ::std::collections::HashMap<::std::string::String, ::std::collections::HashMap<::poem::http::Method, ::poem::endpoint::BoxEndpoint<'static>>>) {
                 #(
-                    let route = self.#indexes.add_routes(route_table);
+                    let route = self.#members.add_routes(route_table);
                 )*
             }
         }
