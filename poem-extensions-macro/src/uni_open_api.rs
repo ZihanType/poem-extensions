@@ -1,11 +1,9 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Member, Type};
+use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Ident, Member, Type};
 
-fn get_fields(args: &DeriveInput) -> syn::Result<(Vec<Member>, Vec<&Type>)> {
-    let struct_ident = &args.ident;
-
-    let fields = match &args.data {
+fn get_fields(struct_ident: &Ident, data: Data) -> syn::Result<(Vec<Member>, Vec<Type>)> {
+    let fields = match data {
         Data::Enum(_) => return Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
         Data::Union(_) => return Err(syn::Error::new_spanned(struct_ident, "union not supported")),
         Data::Struct(ds) => match ds.fields {
@@ -15,21 +13,21 @@ fn get_fields(args: &DeriveInput) -> syn::Result<(Vec<Member>, Vec<&Type>)> {
                     "unit struct not supported",
                 ))
             }
-            Fields::Named(FieldsNamed { ref named, .. }) => named,
-            Fields::Unnamed(FieldsUnnamed { ref unnamed, .. }) => unnamed,
+            Fields::Named(FieldsNamed { named, .. }) => named,
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => unnamed,
         },
     };
 
     let fields = fields
-        .iter()
+        .into_iter()
         .enumerate()
         .map(|(idx, f)| {
-            let member = match &f.ident {
-                Some(ident) => Member::from(ident.clone()),
+            let member = match f.ident {
+                Some(ident) => Member::from(ident),
                 None => Member::from(idx),
             };
 
-            (member, &f.ty)
+            (member, f.ty)
         })
         .unzip();
 
@@ -37,10 +35,16 @@ fn get_fields(args: &DeriveInput) -> syn::Result<(Vec<Member>, Vec<&Type>)> {
 }
 
 pub(crate) fn generate(args: DeriveInput) -> syn::Result<TokenStream> {
-    let struct_ident = &args.ident;
-    let (impl_generics, ty_generics, where_clause) = args.generics.split_for_impl();
+    let DeriveInput {
+        ident: struct_ident,
+        generics,
+        data,
+        ..
+    } = args;
 
-    let (members, types) = get_fields(&args)?;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    let (members, types) = get_fields(&struct_ident, data)?;
 
     let cap = types.len();
 
