@@ -4,13 +4,13 @@ use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Ident, Member, 
 
 fn get_fields(struct_ident: &Ident, data: Data) -> syn::Result<(Vec<Member>, Vec<Type>)> {
     let fields = match data {
-        Data::Enum(_) => return Err(syn::Error::new_spanned(struct_ident, "enum not supported")),
-        Data::Union(_) => return Err(syn::Error::new_spanned(struct_ident, "union not supported")),
+        Data::Enum(_) => return Err(syn::Error::new(struct_ident.span(), "not support enum")),
+        Data::Union(_) => return Err(syn::Error::new(struct_ident.span(), "not support union")),
         Data::Struct(ds) => match ds.fields {
             Fields::Unit => {
-                return Err(syn::Error::new_spanned(
-                    struct_ident,
-                    "unit struct not supported",
+                return Err(syn::Error::new(
+                    struct_ident.span(),
+                    "not support unit struct",
                 ))
             }
             Fields::Named(FieldsNamed { named, .. }) => named,

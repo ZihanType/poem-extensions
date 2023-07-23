@@ -62,8 +62,8 @@ pub(crate) fn generate(args: DeriveInput) -> GeneratorResult<TokenStream> {
     let struct_fields = match &args.data {
         Data::Struct(s) => s,
         _ => {
-            return Err(syn::Error::new_spanned(
-                struct_ident,
+            return Err(syn::Error::new(
+                struct_ident.span(),
                 "Response can only be applied to an tuple struct.",
             )
             .into())
@@ -200,7 +200,7 @@ pub(crate) fn generate(args: DeriveInput) -> GeneratorResult<TokenStream> {
         }
         _ => {
             return Err(
-                syn::Error::new_spanned(struct_ident, "Incorrect response definition.").into(),
+                syn::Error::new(struct_ident.span(), "Incorrect response definition.").into(),
             )
         }
     }

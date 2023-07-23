@@ -5,6 +5,7 @@ use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
+    spanned::Spanned,
     LitInt, Token, Type,
 };
 
@@ -68,8 +69,8 @@ pub(crate) fn generate(args: Responses) -> syn::Result<TokenStream> {
         .partition(|(s, _)| SUPPORT_STATUS.contains(s));
 
     if !unsupport_status.is_empty() {
-        return Err(syn::Error::new_spanned(
-            &args,
+        return Err(syn::Error::new(
+            args.span(),
             format!(
                 "\n  support status code: {SUPPORT_STATUS:?}\nunsupport status code: {:?}",
                 unsupport_status.keys(),
