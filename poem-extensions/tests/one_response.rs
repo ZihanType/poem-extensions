@@ -43,6 +43,7 @@ fn meta() {
             responses: vec![MetaResponse {
                 description: "Ok",
                 status: Some(200),
+                status_range: None,
                 content: vec![],
                 headers: vec![]
             }],
@@ -55,6 +56,7 @@ fn meta() {
             responses: vec![MetaResponse {
                 description: "A\nB\n\nC",
                 status: Some(400),
+                status_range: None,
                 content: vec![MetaMediaType {
                     content_type: "application/json; charset=utf-8",
                     schema: MetaSchemaRef::Reference("BadRequestResult".to_string())
@@ -209,6 +211,7 @@ async fn generic() {
             responses: vec![MetaResponse {
                 description: "",
                 status: Some(200),
+                status_range: None,
                 content: vec![MetaMediaType {
                     content_type: "application/json; charset=utf-8",
                     schema: MetaSchemaRef::Inline(Box::new(MetaSchema::new("string")))
@@ -238,6 +241,7 @@ async fn item_content_type() {
             responses: vec![MetaResponse {
                 description: "",
                 status: Some(200),
+                status_range: None,
                 content: vec![MetaMediaType {
                     content_type: "application/json2",
                     schema: MetaSchemaRef::Inline(Box::new(MetaSchema::new_with_format(

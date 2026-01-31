@@ -33,6 +33,7 @@ fn meta() {
             responses: vec![MetaResponse {
                 description: "Ok",
                 status: Some(200),
+                status_range: None,
                 content: vec![],
                 headers: vec![]
             }],
@@ -49,12 +50,14 @@ fn meta() {
                 MetaResponse {
                     description: "",
                     status: Some(201),
+                    status_range: None,
                     content: vec![],
                     headers: vec![]
                 },
                 MetaResponse {
                     description: "A\nB\n\nC",
                     status: Some(400),
+                    status_range: None,
                     content: vec![],
                     headers: vec![]
                 }
