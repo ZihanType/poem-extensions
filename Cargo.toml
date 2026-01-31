@@ -15,7 +15,7 @@ include = ["src/**/*", "Cargo.toml"]
 poem-extensions-macro = { version = "0.9.0", path = "./poem-extensions-macro", default-features = false }
 
 poem = { version = "3", default-features = false }
-poem-openapi = { version = "^5.1", default-features = false }
+poem-openapi = { version = "5.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 quote = { version = "1", default-features = false }
 syn = { version = "2", default-features = false }
