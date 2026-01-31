@@ -151,6 +151,7 @@ pub(crate) fn generate(args: DeriveInput) -> GeneratorResult<TokenStream> {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
                     status: ::std::option::Option::Some(#status),
+                    status_range: ::std::option::Option::None,
                     content: {
                         let mut content = <#media_ty as ::poem_openapi::ResponseContent>::media_types();
                         #update_meta_content_type
@@ -192,6 +193,7 @@ pub(crate) fn generate(args: DeriveInput) -> GeneratorResult<TokenStream> {
                 ::poem_openapi::registry::MetaResponse {
                     description: #struct_description.unwrap_or_default(),
                     status: ::std::option::Option::Some(#status),
+                    status_range: ::std::option::Option::None,
                     content: ::std::vec![],
                     headers: ::std::vec![#(#meta_headers),*],
                 }
